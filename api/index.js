@@ -1,21 +1,27 @@
 import axios from "axios";
 
-// instância já apontando para sua API no Render
+// ---- Axios configurado para seu backend no Render
 const instance = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? "https://tarefas-api-express.onrender.com",
+  baseURL:
+    process.env.EXPO_PUBLIC_API_URL ??
+    "https://tarefas-api-express.onrender.com",
   timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
+
+// ---- Helpers de compatibilidade (UI antiga x API nova)
+const getId = (t) => t?.id ?? t?.objectId;                // aceita id OU objectId
+const toOldShape = (t) => ({ ...t, objectId: t.id ?? t.objectId }); // expõe objectId também
 
 // Listar
 export async function getTarefas() {
   const { data } = await instance.get("/tarefas");
-  return data;
+  // API nova retorna um array direto; Back4App era data.results
+  const list = Array.isArray(data) ? data : data?.results ?? [];
+  return list.map(toOldShape);
 }
 
-// Criar (usa descricao como titulo se titulo não vier)
+// Criar (usa descricao como título se não vier titulo)
 export async function addTarefa({ titulo, descricao }) {
   const safeTitulo = titulo ?? descricao ?? "Sem título";
   const safeDescricao = descricao ?? "";
@@ -23,21 +29,23 @@ export async function addTarefa({ titulo, descricao }) {
     titulo: safeTitulo,
     descricao: safeDescricao,
   });
-  return data;
+  return toOldShape(data);
 }
 
 // Atualizar (PUT)
 export async function updateTarefa(tarefa) {
-  const { data } = await instance.put(`/tarefas/${tarefa.id}`, {
-    titulo: tarefa.titulo,
-    descricao: tarefa.descricao,
-    concluida: tarefa.concluida,
+  const id = getId(tarefa);
+  const { data } = await instance.put(`/tarefas/${id}`, {
+    titulo: tarefa.titulo ?? tarefa.descricao ?? "Sem título",
+    descricao: tarefa.descricao ?? "",
+    concluida: !!tarefa.concluida,
   });
-  return data;
+  return toOldShape(data);
 }
 
 // Remover
 export async function deleteTarefa(tarefa) {
-  await instance.delete(`/tarefas/${tarefa.id}`);
+  const id = getId(tarefa);
+  await instance.delete(`/tarefas/${id}`);
   return true;
 }
