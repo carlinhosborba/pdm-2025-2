@@ -15,9 +15,14 @@ export async function getTarefas() {
   return data;
 }
 
-// Criar
+// Criar (usa descricao como titulo se titulo não vier)
 export async function addTarefa({ titulo, descricao }) {
-  const { data } = await instance.post("/tarefas", { titulo, descricao });
+  const safeTitulo = titulo ?? descricao ?? "Sem título";
+  const safeDescricao = descricao ?? "";
+  const { data } = await instance.post("/tarefas", {
+    titulo: safeTitulo,
+    descricao: safeDescricao,
+  });
   return data;
 }
 
