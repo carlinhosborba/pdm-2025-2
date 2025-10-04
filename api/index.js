@@ -13,11 +13,12 @@ const instance = axios.create({
 const getId = (t) => t?.id ?? t?.objectId; // aceita id OU objectId
 const toOldShape = (t) => ({ ...t, objectId: t.id ?? t.objectId }); // expõe objectId também
 
-// Listar — retorna no formato antigo: { results: [...] }
+// Listar — retorna um ARRAY e também expõe .results = array (compat total)
 export async function getTarefas() {
   const { data } = await instance.get("/tarefas");
-  const list = Array.isArray(data) ? data : data?.results ?? [];
-  return { results: list.map(toOldShape) };
+  const listArr = (Array.isArray(data) ? data : data?.results ?? []).map(toOldShape);
+  listArr.results = listArr; // permite usar tanto array direto quanto { results }
+  return listArr;
 }
 
 // Criar (usa descricao como título se não vier titulo)
