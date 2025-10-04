@@ -10,15 +10,14 @@ const instance = axios.create({
 });
 
 // ---- Helpers de compatibilidade (UI antiga x API nova)
-const getId = (t) => t?.id ?? t?.objectId;                // aceita id OU objectId
+const getId = (t) => t?.id ?? t?.objectId; // aceita id OU objectId
 const toOldShape = (t) => ({ ...t, objectId: t.id ?? t.objectId }); // expõe objectId também
 
-// Listar
+// Listar — retorna no formato antigo: { results: [...] }
 export async function getTarefas() {
   const { data } = await instance.get("/tarefas");
-  // API nova retorna um array direto; Back4App era data.results
   const list = Array.isArray(data) ? data : data?.results ?? [];
-  return list.map(toOldShape);
+  return { results: list.map(toOldShape) };
 }
 
 // Criar (usa descricao como título se não vier titulo)
