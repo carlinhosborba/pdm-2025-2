@@ -42,17 +42,18 @@
     "experiments": {
       "typedRoutes": true
     },
-    "extra": {
-      "eas": {
-        "projectId": "35aae221-2f3c-4cba-a266-939001718d54"
-      }
-    },
-    "owner": "marciobueno1",
-    "updates": {
-      "url": "https://u.expo.dev/35aae221-2f3c-4cba-a266-939001718d54"
-    },
+    "owner": "carlosborbab",
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e7f4531c-f594-4db7-8de7-5ff3a33bcacb"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e7f4531c-f594-4db7-8de7-5ff3a33bcacb"
     }
   }
 }
