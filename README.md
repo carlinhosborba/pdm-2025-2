@@ -1,50 +1,133 @@
-# Welcome to your Expo app 👋
+# PDM 2025.2 — App Expo + Back-end Express
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo Expo/React Native **conectado a um back-end próprio em Node/Express**, substituindo o Back4App, conforme pedido na atividade.
 
-## Get started
+## 📌 Links para avaliação
 
-1. Install dependencies
+- **App (repositório com as mudanças):**  
+  https://github.com/carlinhosborba/pdm-2025-2
 
+- **Back-end Express (repositório separado):**  
+  https://github.com/carlinhosborba/tarefas-api-express
+
+- **App publicado (Expo OTA – QR na página):**  
+  https://expo.dev/accounts/carlosborbab/projects/pdm-2025-2/updates/7c2d6b64-8002-40c3-88a7-0c179abd0555
+
+- **API pública (Render):**  
+  https://tarefas-api-express.onrender.com  
+  Endpoint principal: `/tarefas`
+
+> Dica: o Render Free pode “hibernar”. Se o primeiro acesso demorar, abra a raiz da API acima (200 OK) e depois volte ao app.
+
+---
+
+## 🚀 Como rodar o app localmente
+
+1. Instale as dependências:
    ```bash
    npm install
    ```
 
-2. Start the app
+2. Configure a URL do back-end (já padrão para o Render). Se quiser sobrescrever, crie um `.env` na raiz do app:
+   ```bash
+   EXPO_PUBLIC_API_URL=https://tarefas-api-express.onrender.com
+   ```
 
+3. Inicie o app:
    ```bash
    npx expo start
    ```
+   Abra no **Expo Go** (Android/iOS) ou emulador.
 
-In the output, you'll find options to open the app in a
+> A home (`app/index.tsx`) redireciona automaticamente para **/tarefas**.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🧠 O que foi alterado
 
-## Get a fresh project
+- `api/index.js` agora usa **Axios** apontando para `EXPO_PUBLIC_API_URL` e fala com a API Express (`/tarefas`).
+- Adaptadores de compatibilidade preservam o uso antigo (`objectId`) quando necessário, mapeando para `id`.
+- Publicação **OTA (EAS Update)** feita, com link/QR acima.
 
-When you're ready, run:
+---
+
+## 🛠️ Back-end (Express) — Documentação rápida
+
+**Base URL:** `https://tarefas-api-express.onrender.com`
+
+> **Observação:** armazenamento **em memória** (apenas para a atividade). Reinícios do servidor limpam os dados.
+
+### Rotas
+
+- `GET /`  
+  Retorna texto simples para verificação: “API de Tarefas rodando! Use /tarefas”.
+
+- `GET /tarefas`  
+  Lista todas as tarefas. **Resposta**:
+  ```json
+  [
+    {
+      "id": 1,
+      "titulo": "Exemplo",
+      "descricao": "Detalhe",
+      "concluida": false,
+      "createdAt": "2025-10-01T12:34:56.789Z"
+    }
+  ]
+  ```
+
+- `GET /tarefas/:id`  
+  Retorna 404 se não existir.
+
+- `POST /tarefas`  
+  **Body:**
+  ```json
+  { "titulo": "Nova tarefa", "descricao": "opcional" }
+  ```
+  **Resposta 201:** tarefa criada.
+
+- `PUT /tarefas/:id`  
+  **Body (completo):**
+  ```json
+  { "titulo": "Atualizado", "descricao": "texto", "concluida": true }
+  ```
+
+- `PATCH /tarefas/:id`  
+  **Body (parcial):** qualquer campo para atualizar.
+
+- `DELETE /tarefas/:id`  
+  **Resposta 204** sem corpo.
+
+### Testes rápidos (cURL)
 
 ```bash
-npm run reset-project
+# Criar
+curl -i -X POST https://tarefas-api-express.onrender.com/tarefas   -H "Content-Type: application/json"   -d '{"titulo":"Primeira do Prod","descricao":"criada pelo terminal"}'
+
+# Listar
+curl -i https://tarefas-api-express.onrender.com/tarefas
+
+# Atualizar (PUT)
+curl -i -X PUT https://tarefas-api-express.onrender.com/tarefas/1   -H "Content-Type: application/json"   -d '{"titulo":"Atualizada","descricao":"detalhe","concluida":true}'
+
+# Remover
+curl -i -X DELETE https://tarefas-api-express.onrender.com/tarefas/1
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## 🧩 Stack
 
-To learn more about developing your project with Expo, look at the following resources:
+- **App:** Expo (Router), React Native, Axios, EAS Update (OTA)
+- **UI:** NativeWind (Tailwind RN) + componentes simples
+- **Back-end:** Node.js + Express + CORS
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## ✅ Entrega
 
-Join our community of developers creating universal apps.
+- Código no GitHub (app e back-end)
+- App publicado no Expo (OTA com QR)
+- API disponível publicamente (Render)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Qualquer problema para abrir o QR no Expo Go, use o link da atualização OTA acima.
