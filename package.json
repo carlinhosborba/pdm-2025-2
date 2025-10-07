@@ -17,6 +17,8 @@
     "@gluestack-ui/core": "^3.0.10",
     "@gluestack-ui/utils": "^3.0.7",
     "@gluestack/ui-next-adapter": "^3.0.3",
+    "@react-aria/dialog": "^3.5.31",
+    "@react-aria/overlays": "^3.30.0",
     "@react-aria/utils": "^3.30.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.3.10",

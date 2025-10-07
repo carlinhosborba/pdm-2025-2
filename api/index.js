@@ -1,3 +1,4 @@
+// api/index.js
 import axios from "axios";
 
 // ---- Axios configurado para seu backend no Render
@@ -40,6 +41,13 @@ export async function updateTarefa(tarefa) {
     descricao: tarefa.descricao ?? "",
     concluida: !!tarefa.concluida,
   });
+  return toOldShape(data);
+}
+
+// Marcar/desmarcar como concluída (PATCH)
+export async function toggleConclusao(tarefaOrId, concluida) {
+  const id = typeof tarefaOrId === "object" ? getId(tarefaOrId) : tarefaOrId;
+  const { data } = await instance.patch(`/tarefas/${id}`, { concluida: !!concluida });
   return toOldShape(data);
 }
 
