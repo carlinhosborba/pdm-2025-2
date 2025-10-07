@@ -10,8 +10,6 @@ import {
 } from "react-native";
 
 import { PizzaTranslator } from "@/components/PizzaTranslator";
-// import { ScrollViewApp } from "@/components/ScrollViewApp";
-// import { FlatListExample } from "@/components/FlatListExample";
 import { SectionListExample } from "@/components/SectionListExample";
 import { useStore } from "@/zustand";
 
@@ -30,12 +28,16 @@ export default function Index() {
         onValueChange={toggleIsEnabled}
         value={isEnabled}
       />
+
       <View className="flex-1 items-center justify-center bg-white">
         <Text className="text-xl font-bold text-blue-500">
           Welcome to Nativewind!
         </Text>
       </View>
-      <Spinner size="large" color="orange" />
+
+      {/* REMOVIDO: spinner sempre visível que causava “giro infinito” */}
+      {/* <Spinner size="large" color="orange" /> */}
+
       <Switch
         size="md"
         isDisabled={false}
@@ -44,6 +46,7 @@ export default function Index() {
         activeThumbColor="#fafafa"
         ios_backgroundColor="#d4d4d4"
       />
+
       {isEnabled ? (
         <SectionListExample />
       ) : (
