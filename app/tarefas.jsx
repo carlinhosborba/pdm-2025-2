@@ -9,18 +9,16 @@ import {
   Text,
   TextInput,
   View,
+  Switch,
 } from "react-native";
 import {
   getTarefas,
   addTarefa,
   updateTarefa,
   deleteTarefa,
+  toggleConclusao,
 } from "@/api";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const getId = (t) => t?.id ?? t?.objectId;
 
@@ -42,16 +40,11 @@ export default function TelaTarefas() {
   });
 
   const alternar = useMutation({
-    mutationFn: (t) =>
-      updateTarefa({
-        ...t,
-        titulo: t.titulo ?? t.descricao ?? "Sem título",
-        descricao: t.descricao ?? "",
-        concluida: !t.concluida,
-      }),
-    onSuccess: (atualizado) => {
+    mutationFn: ({ tarefa, value }) =>
+      toggleConclusao(getId(tarefa), value),
+    onSuccess: (atualizada) => {
       qc.setQueryData(["tarefas"], (old = []) =>
-        old.map((x) => (getId(x) === getId(atualizado) ? atualizado : x))
+        old.map((x) => (getId(x) === getId(atualizada) ? atualizada : x))
       );
     },
   });
@@ -86,7 +79,7 @@ export default function TelaTarefas() {
           onChangeText={setNovoTitulo}
         />
         <Pressable
-          style={styles.btn}
+          style={[styles.btn, criar.isPending && { opacity: 0.7 }]}
           onPress={() => novoTitulo.trim() && criar.mutate({ titulo: novoTitulo })}
           disabled={criar.isPending}
         >
@@ -110,7 +103,16 @@ export default function TelaTarefas() {
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Pressable onPress={() => alternar.mutate(item)} style={{ flex: 1 }}>
+            <Switch
+              value={!!item.concluida}
+              onValueChange={(v) => alternar.mutate({ tarefa: item, value: v })}
+            />
+            <Pressable
+              onPress={() =>
+                alternar.mutate({ tarefa: item, value: !item.concluida })
+              }
+              style={{ flex: 1 }}
+            >
               <Text
                 style={[
                   styles.cardTitulo,
@@ -120,7 +122,7 @@ export default function TelaTarefas() {
                   },
                 ]}
               >
-                {item.titulo ?? item.descricao}
+                {item.titulo ?? item.descricao ?? "(sem título)"}
               </Text>
               {!!item.descricao && (
                 <Text style={styles.cardDesc}>{item.descricao}</Text>
@@ -129,7 +131,7 @@ export default function TelaTarefas() {
 
             <Pressable
               onPress={() => remover.mutate(item)}
-              style={styles.delBtn}
+              style={[styles.delBtn, remover.isPending && { opacity: 0.7 }]}
             >
               <Text style={styles.delTxt}>
                 {remover.isPending ? "…" : "Excluir"}
