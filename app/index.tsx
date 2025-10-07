@@ -1,80 +1,45 @@
-import { Spinner } from "@/components/ui/spinner";
-import { Switch } from "@/components/ui/switch";
-import { Link } from "expo-router";
-import {
-  Dimensions,
-  Switch as RNSwitch,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-
-import { PizzaTranslator } from "@/components/PizzaTranslator";
-import { SectionListExample } from "@/components/SectionListExample";
-import { useStore } from "@/zustand";
-
-console.log("window dimensions: ", Dimensions.get("window"));
+// app/index.tsx
+import React, { useEffect } from "react";
+import { router, Link } from "expo-router";
+import { View, Text, Pressable } from "react-native";
 
 export default function Index() {
-  const isEnabled = useStore((state) => state.isEnabled);
-  const toggleIsEnabled = useStore((state) => state.toggleIsEnabled);
+  // redireciona imediatamente para /tarefas ao montar
+  useEffect(() => {
+    const t = setTimeout(() => router.replace("/tarefas"), 0);
+    return () => clearTimeout(t);
+  }, []);
 
+  // fallback visível por 1 instante (ou se algo falhar)
   return (
-    <View style={styles.rootContainer}>
-      <RNSwitch
-        trackColor={{ false: "#767577", true: "#81b0ff" }}
-        thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
-        ios_backgroundColor="#3e3e3e"
-        onValueChange={toggleIsEnabled}
-        value={isEnabled}
-      />
+    <View
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 16,
+        padding: 24,
+      }}
+    >
+      <Text style={{ fontSize: 18, textAlign: "center" }}>
+        Redirecionando para <Text style={{ fontWeight: "700" }}>/tarefas</Text>…
+      </Text>
 
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text className="text-xl font-bold text-blue-500">
-          Welcome to Nativewind!
-        </Text>
-      </View>
+      <Pressable
+        onPress={() => router.replace("/tarefas")}
+        style={{
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          backgroundColor: "#2563eb",
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "700" }}>Ir agora</Text>
+      </Pressable>
 
-      {/* REMOVIDO: spinner sempre visível que causava “giro infinito” */}
-      {/* <Spinner size="large" color="orange" /> */}
-
-      <Switch
-        size="md"
-        isDisabled={false}
-        trackColor={{ false: "#d4d4d4", true: "#525252" }}
-        thumbColor="#fafafa"
-        activeThumbColor="#fafafa"
-        ios_backgroundColor="#d4d4d4"
-      />
-
-      {isEnabled ? (
-        <SectionListExample />
-      ) : (
-        <View style={styles.container}>
-          <Text style={styles.title}>Olá Turma!!!</Text>
-          <Link href="/list">Section List Example</Link>
-          <Link href="/tarefas">Tasks Example</Link>
-          <PizzaTranslator />
-        </View>
-      )}
+      <Link href="/tarefas" style={{ fontSize: 16, color: "blue" }}>
+        Abrir /tarefas
+      </Link>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  rootContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-  container: {
-    flex: 1,
-    justifyContent: "flex-start",
-    alignItems: "center",
-    marginTop: 25,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "blue",
-  },
-});
