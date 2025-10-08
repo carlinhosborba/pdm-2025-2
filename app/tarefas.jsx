@@ -1,188 +1,175 @@
-// app/tarefas.jsx
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
-  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
   View,
-  Switch,
 } from "react-native";
 import {
-  getTarefas,
   addTarefa,
-  updateTarefa,
   deleteTarefa,
-  toggleConclusao,
-} from "@/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-const getId = (t) => t?.id ?? t?.objectId;
+  getTarefas,
+  updateTarefa,
+} from "@/api"; // <- usa seu api/index.js
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 export default function TelaTarefas() {
-  const [novoTitulo, setNovoTitulo] = useState("");
+  const [texto, setTexto] = useState("");
   const qc = useQueryClient();
 
-  const { data: itens = [], isLoading, refetch, isRefetching } = useQuery({
+  // Lista
+  const { data: tarefas = [], isLoading, isFetching } = useQuery({
     queryKey: ["tarefas"],
     queryFn: getTarefas,
   });
 
+  // Criar
   const criar = useMutation({
-    mutationFn: ({ titulo }) => addTarefa({ titulo, descricao: "" }),
-    onSuccess: (criado) => {
-      qc.setQueryData(["tarefas"], (old = []) => [...old, criado]);
-      setNovoTitulo("");
+    mutationFn: (t) => addTarefa({ titulo: t, descricao: t }),
+    onSuccess: () => {
+      setTexto("");
+      qc.invalidateQueries({ queryKey: ["tarefas"] });
     },
+    onError: () => Alert.alert("Erro", "Não foi possível criar a tarefa."),
   });
 
+  // Alternar concluída
   const alternar = useMutation({
-    mutationFn: ({ tarefa, value }) =>
-      toggleConclusao(getId(tarefa), value),
-    onSuccess: (atualizada) => {
-      qc.setQueryData(["tarefas"], (old = []) =>
-        old.map((x) => (getId(x) === getId(atualizada) ? atualizada : x))
-      );
-    },
+    mutationFn: (tarefa) =>
+      updateTarefa({ ...tarefa, concluida: !tarefa.concluida }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tarefas"] }),
+    onError: () => Alert.alert("Erro", "Não foi possível atualizar a tarefa."),
   });
 
-  const remover = useMutation({
-    mutationFn: (t) => deleteTarefa(t),
-    onSuccess: (_, t) => {
-      qc.setQueryData(["tarefas"], (old = []) =>
-        old.filter((x) => getId(x) !== getId(t))
-      );
-    },
+  // Excluir
+  const excluir = useMutation({
+    mutationFn: (tarefa) => deleteTarefa(tarefa),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tarefas"] }),
+    onError: () => Alert.alert("Erro", "Não foi possível excluir a tarefa."),
   });
 
-  if (isLoading) {
+  const renderItem = ({ item }) => {
+    const concluida = !!item.concluida;
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 8 }}>Carregando tarefas…</Text>
+      <View style={styles.card}>
+        <Pressable
+          onPress={() => alternar.mutate(item)}
+          style={styles.left}
+          android_ripple={{ color: "#e5e7eb" }}
+        >
+          <Text style={[styles.titulo, concluida && styles.tituloDone]}>
+            {item.titulo || item.descricao || "Sem título"}
+          </Text>
+          <Text style={styles.desc}>{item.descricao}</Text>
+          <Text style={styles.status}>
+            {concluida ? "✔ Concluída" : "⏳ Pendente"}
+          </Text>
+        </Pressable>
+
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => alternar.mutate(item)}
+            style={[styles.btn, styles.btnOk]}
+          >
+            <Text style={styles.btnTxt}>{concluida ? "Desfazer" : "Concluir"}</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => excluir.mutate(item)}
+            style={[styles.btn, styles.btnDel]}
+          >
+            <Text style={styles.btnTxt}>Excluir</Text>
+          </Pressable>
+        </View>
       </View>
     );
-  }
+  };
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12 }}>
-      <Text style={styles.titulo}>Tarefas</Text>
+    <View style={styles.container}>
+      <Text style={styles.h1}>Tarefas</Text>
 
       <View style={styles.row}>
         <TextInput
           style={styles.input}
-          placeholder="Nova tarefa…"
-          value={novoTitulo}
-          onChangeText={setNovoTitulo}
+          placeholder="Nova tarefa..."
+          value={texto}
+          onChangeText={setTexto}
+          onSubmitEditing={() => texto.trim() && criar.mutate(texto.trim())}
         />
         <Pressable
-          style={[styles.btn, criar.isPending && { opacity: 0.7 }]}
-          onPress={() => novoTitulo.trim() && criar.mutate({ titulo: novoTitulo })}
-          disabled={criar.isPending}
+          style={[styles.btn, styles.btnPrimary]}
+          onPress={() => texto.trim() && criar.mutate(texto.trim())}
         >
-          <Text style={styles.btnTxt}>
-            {criar.isPending ? "Adicionando…" : "Adicionar"}
-          </Text>
+          <Text style={styles.btnTxt}>Adicionar</Text>
         </Pressable>
       </View>
 
+      {(isLoading || isFetching) && (
+        <ActivityIndicator size="small" style={{ marginVertical: 8 }} />
+      )}
+
       <FlatList
-        data={itens}
-        keyExtractor={(item) => String(getId(item))}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-        }
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        data={tarefas}
+        keyExtractor={(t) => String(t.id ?? t.objectId)}
+        renderItem={renderItem}
         ListEmptyComponent={
-          <Text style={{ textAlign: "center", marginTop: 20 }}>
+          <Text style={styles.empty}>
             Sem tarefas ainda. Adicione uma acima.
           </Text>
         }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Switch
-              value={!!item.concluida}
-              onValueChange={(v) => alternar.mutate({ tarefa: item, value: v })}
-            />
-            <Pressable
-              onPress={() =>
-                alternar.mutate({ tarefa: item, value: !item.concluida })
-              }
-              style={{ flex: 1 }}
-            >
-              <Text
-                style={[
-                  styles.cardTitulo,
-                  item.concluida && {
-                    textDecorationLine: "line-through",
-                    opacity: 0.6,
-                  },
-                ]}
-              >
-                {item.titulo ?? item.descricao ?? "(sem título)"}
-              </Text>
-              {!!item.descricao && (
-                <Text style={styles.cardDesc}>{item.descricao}</Text>
-              )}
-            </Pressable>
-
-            <Pressable
-              onPress={() => remover.mutate(item)}
-              style={[styles.delBtn, remover.isPending && { opacity: 0.7 }]}
-            >
-              <Text style={styles.delTxt}>
-                {remover.isPending ? "…" : "Excluir"}
-              </Text>
-            </Pressable>
-          </View>
-        )}
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  titulo: { fontSize: 28, fontWeight: "700" },
-  row: { flexDirection: "row", gap: 8 },
+  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  h1: { fontSize: 32, fontWeight: "bold", marginBottom: 12 },
+  row: { flexDirection: "row", gap: 12, alignItems: "center" },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
+    borderColor: "#e5e7eb",
+    borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
-    backgroundColor: "#fff",
   },
-  btn: {
-    backgroundColor: "#2563eb",
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    height: 44,
-  },
-  btnTxt: { color: "#fff", fontWeight: "600" },
+  empty: { textAlign: "center", marginTop: 40, color: "#6b7280" },
+
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#e5e7eb",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    flexDirection: "row",
+    gap: 12,
   },
-  cardTitulo: { fontSize: 16, fontWeight: "600" },
-  cardDesc: { color: "#666", marginTop: 2 },
-  delBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "#ef4444",
+  left: { flex: 1 },
+  titulo: { fontSize: 18, fontWeight: "600" },
+  tituloDone: { textDecorationLine: "line-through", color: "#16a34a" },
+  desc: { color: "#6b7280", marginTop: 2 },
+  status: { marginTop: 6, fontSize: 12, color: "#6b7280" },
+
+  actions: { gap: 8, justifyContent: "center" },
+  btn: {
     borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
   },
-  delTxt: { color: "#fff", fontWeight: "700" },
+  btnPrimary: { backgroundColor: "#2563eb" },
+  btnOk: { backgroundColor: "#16a34a" },
+  btnDel: { backgroundColor: "#dc2626" },
+  btnTxt: { color: "#fff", fontWeight: "600" },
 });
